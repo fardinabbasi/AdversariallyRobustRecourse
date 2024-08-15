@@ -31,7 +31,7 @@ def find_recourse_lin(model, trainer, scmm, X_explain, constraints, epsilon):
     explain = recourse.LinearRecourse(w, b)
     interv, recourse_valid, cost_recourse, _, interv_set = recourse.causal_recourse(X_explain, explain,
                                                                                        constraints, scm=scmm)
-    return interv, interv_set, recourse_valid.astype(np.bool), cost_recourse
+    return interv, interv_set, recourse_valid.astype(bool), cost_recourse
 
 
 def find_recourse_mlp(model, trainer, scmm, X_explain, constraints, epsilon):
@@ -40,7 +40,7 @@ def find_recourse_mlp(model, trainer, scmm, X_explain, constraints, epsilon):
     interv, recourse_valid, cost_recourse, _, interv_set = recourse.causal_recourse(X_explain, explain,
                                                                                     constraints, scm=scmm,
                                                                                     epsilon=epsilon, robust=epsilon>0)
-    return interv, interv_set, recourse_valid.astype(np.bool), cost_recourse
+    return interv, interv_set, recourse_valid.astype(bool), cost_recourse
 
 
 def eval_recourse(dataset, model_type, trainer, random_seed, N_explain, epsilon, lambd, save_dir, save_adv=False):
@@ -56,7 +56,7 @@ def eval_recourse(dataset, model_type, trainer, random_seed, N_explain, epsilon,
     model_dir = utils.get_model_save_dir(dataset, trainer, model_type, random_seed, lambd) + '.pth'
     model = trainers.LogisticRegression if model_type == 'lin' else trainers.MLP
     model = model(X_train.shape[-1], actionable_features=constraints['actionable'], actionable_mask=trainer=='AF')
-    model.load_state_dict(torch.load(model_dir))
+    model.load_state_dict(torch.load(model_dir, weights_only=False))
     model.set_max_mcc_threshold(X_train, Y_train)
 
     # Load the SCM

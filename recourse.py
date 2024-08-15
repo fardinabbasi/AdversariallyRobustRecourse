@@ -115,7 +115,7 @@ class LinearRecourse:
         for i in iter_range:
             action[i], finished[i], cost[i], cfs[i] = self.solve_lp(x[i], J, unactionable, bounds[i])
 
-        return action, finished.astype(np.bool), cost, cfs
+        return action, finished.astype(bool), cost, cfs
 
 class DifferentiableRecourse:
     """

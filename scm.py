@@ -506,9 +506,9 @@ class Learned_Adult_SCM(SCM):
         f1, f2, f3 = self.get_eqs()
 
         model_type = '_lin' if self.linear else '_mlp'
-        f1.load_state_dict(torch.load(name + model_type + '_f1.pth'))
-        f2.load_state_dict(torch.load(name + model_type + '_f2.pth'))
-        f3.load_state_dict(torch.load(name + model_type + '_f3.pth'))
+        f1.load_state_dict(torch.load(name + model_type + '_f1.pth', weights_only=False))
+        f2.load_state_dict(torch.load(name + model_type + '_f2.pth', weights_only=False))
+        f3.load_state_dict(torch.load(name + model_type + '_f3.pth', weights_only=False))
 
         self.set_eqs(f1, f2, f3)
 
@@ -633,8 +633,8 @@ class Learned_COMPAS_SCM(SCM):
         f1, f2 = self.get_eqs()
 
         model_type = '_lin' if self.linear else '_mlp'
-        f1.load_state_dict(torch.load(name + model_type + '_f1.pth'))
-        f2.load_state_dict(torch.load(name + model_type + '_f2.pth'))
+        f1.load_state_dict(torch.load(name + model_type + '_f1.pth', weights_only=False))
+        f2.load_state_dict(torch.load(name + model_type + '_f2.pth', weights_only=False))
 
         self.set_eqs(f1, f2)
 

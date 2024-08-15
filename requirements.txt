@@ -1,4 +1,3 @@
-torch
 tqdm
 numpy
 pandas
@@ -6,5 +5,6 @@ matplotlib
 seaborn
 scipy
 cvxpy
-sklearn
+scikit-learn
 tensorboard
+torch

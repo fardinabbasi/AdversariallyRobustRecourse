@@ -10,6 +10,8 @@ pd.options.mode.chained_assignment = None  # default='warn'
 import os
 import numpy as np
 
+pd.set_option('future.no_silent_downcasting', True)
+
 DATA_DIR = 'data/'
 
 def get_data_file(data_name):
