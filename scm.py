@@ -7,6 +7,7 @@ import os
 import data_utils
 import numpy as np
 import torch
+from torch.autograd.functional import jacobian
 
 from itertools import chain, combinations  # for the powerset of actionable combinations of interventions
 
@@ -423,23 +424,41 @@ class Learned_Adult_SCM(SCM):
             return torch.nn.Linear(3, 1), torch.nn.Linear(4, 1), torch.nn.Linear(4, 1)
         return MLP1(3), MLP1(4), MLP1(4)
 
-    def get_Jacobian(self):
-        assert self.linear, "Jacobian only used for linear SCM"
+    def get_Jacobian(self, input_point=None):
+        if(self.linear):
+            w4 = self.f1.weight[0]
+            w5 = self.f2.weight[0]
+            w6 = self.f3.weight[0]
 
-        w4 = self.f1.weight[0]
-        w5 = self.f2.weight[0]
-        w6 = self.f3.weight[0]
+            w41, w42, w43 = w4[0].item(), w4[1].item(), w4[2].item()
+            w51, w52, w53, w54 = w5[0].item(), w5[1].item(), w5[2].item(), w5[3].item()
+            w61, w62, w63, w64 = w6[0].item(), w6[1].item(), w6[2].item(), w6[3].item()
 
-        w41, w42, w43 = w4[0].item(), w4[1].item(), w4[2].item()
-        w51, w52, w53, w54 = w5[0].item(), w5[1].item(), w5[2].item(), w5[3].item()
-        w61, w62, w63, w64 = w6[0].item(), w6[1].item(), w6[2].item(), w6[3].item()
+            return np.array([[1, 0, 0, 0, 0, 0],
+                            [0, 1, 0, 0, 0, 0],
+                            [0, 0, 1, 0, 0, 0],
+                            [w41, w42, w43, 1, 0, 0],
+                            [w51 + w54*w41, w52 + w54*w42, w53 + w54*w43, w54, 1, 0],
+                            [w61 + w64*w41, w62 + w64*w42, w63 + w64*w43, w64, 0, 1]])
+        else:
+            assert isinstance(input_point, torch.Tensor), "Input point must be a torch.Tensor"
 
-        return np.array([[1, 0, 0, 0, 0, 0],
-                         [0, 1, 0, 0, 0, 0],
-                         [0, 0, 1, 0, 0, 0],
-                         [w41, w42, w43, 1, 0, 0],
-                         [w51 + w54*w41, w52 + w54*w42, w53 + w54*w43, w54, 1, 0],
-                         [w61 + w64*w41, w62 + w64*w42, w63 + w64*w43, w64, 0, 1]])
+            input_point = input_point.requires_grad_(True)
+            outputs = torch.cat([self.f1(input_point[:, :3]),
+                             self.f2(input_point[:, :4]),
+                             self.f3(input_point[:, :4])], dim=1)
+
+            J_pt = torch.zeros((input_point.shape[1], outputs.shape[1]))
+        
+            for i in range(outputs.shape[1]):
+                J_i = jacobian(lambda x: outputs[:, i], input_point)
+                J_pt[:, i] = J_i
+
+            # Convert to CVXPY variable (or expression)
+            J_cvx = cp.Variable(J_pt.shape)
+            J_cvx.value = J_pt.detach().numpy()  # Detach and convert to numpy
+            
+            return J_cvx
 
     def get_Jacobian_interv(self, interv_set):
         """ Get the Jacobian of the structural equations under some interventions """
